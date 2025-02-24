@@ -193,13 +193,22 @@ static int ladder_load(int argc, char** argv) {
         printf(" Error: No file name\n");
         return 1;
     }
-    
-    if(strcmp(argv[1], "demo") == 0) {
-        ESP_LOGI(TAG, "Load demo program: ");
+
+    if (strcmp(argv[1], "demo") == 0) {
+        ESP_LOGI(TAG, "Load demo program");
+
+        if (ladder_ctx.network != NULL)
+            ladder_ctx_deinit(&ladder_ctx);
+
+        if (!ladder_ctx_init(&ladder_ctx, 6, 7, 3, QTY_M, QTY_I, QTY_Q, QTY_IW, QTY_QW, QTY_C, QTY_T, QTY_D, QTY_R)) {
+            ESP_LOGI(TAG, "ERROR Initializing\n");
+            return 1;
+        }
+        ladder_clear_program(&ladder_ctx);
+
         load_demo(&ladder_ctx);
         return 0;
     }
-    
 
     size_t rn = 0;
     uint32_t nets = 0;
@@ -234,11 +243,14 @@ static int ladder_load(int argc, char** argv) {
         return 1;
     }
 
-    ladder_ctx_deinit(&ladder_ctx);
-    if (!ladder_ctx_init(&ladder_ctx, nets, rows, cols, QTY_M, QTY_I, QTY_Q, QTY_IW, QTY_QW, QTY_C, QTY_T, QTY_D, QTY_R)) {
+    if (ladder_ctx.network != NULL)
+        ladder_ctx_deinit(&ladder_ctx);
+    if (!ladder_ctx_init(&ladder_ctx, cols, rows, nets, QTY_M, QTY_I, QTY_Q, QTY_IW, QTY_QW, QTY_C, QTY_T, QTY_D, QTY_R)) {
         ESP_LOGI(TAG, "ERROR Initializing\n");
         return 1;
     }
+
+    ladder_clear_program(&ladder_ctx);
 
     for (uint32_t n = 0; n < ladder_ctx.ladder.quantity.networks; n++) {
         rn = fread(&ladder_ctx.network[n], sizeof(ladder_network_t), 1, file);
@@ -298,27 +310,33 @@ static void register_ladder_stop(void) {
     ESP_ERROR_CHECK(esp_console_cmd_register(&cmd));
 }
 
-static int ladder_print(int argc, char** argv) {
-    ladder_print(&ladder_ctx);
+static int ladder_net_print(int argc, char** argv) {
+    if (ladder_ctx.network == NULL) {
+        ESP_LOGI(TAG, "No program!");
+        return 1;
+    }
+
+    ladder_print(ladder_ctx);
 
     return 0;
 }
 
 static void register_ladder_print(void) {
     const esp_console_cmd_t cmd = {
-        .command = "stop",
+        .command = "print",
         .help = "Print ladder logic",
         .hint = NULL,
-        .func = &ladder_print,
+        .func = &ladder_net_print,
     };
     ESP_ERROR_CHECK(esp_console_cmd_register(&cmd));
 }
+
 //////////////////////////////////////////////////////////
 
 static bool load_demo(ladder_ctx_t* ladder_ctx) {
     bool ret = true;
 
-    ESP_LOGI(TAG, "blink (2 network, 7 rows, 6 columns)");
+    ESP_LOGI(TAG, "blink (3 network, 7 rows, 6 columns)");
 
     // Network 0
     (*ladder_ctx).network[0].enable = true;
@@ -487,17 +505,6 @@ void app_main(void) {
 
     ///////////////////////////////////////////////////////
 
-    ESP_LOGI(TAG, "Create ladder task");
-
-    // initialize context
-    if (!ladder_ctx_init(&ladder_ctx, 6, 7, 3, QTY_M, QTY_I, QTY_Q, QTY_IW, QTY_QW, QTY_C, QTY_T, QTY_D, QTY_R)) {
-        ESP_LOGI(TAG, "ERROR Initializing\n");
-        return;
-    }
-
-    // clear program
-    ladder_clear_program(&ladder_ctx);
-
     // assign port functions
     ladder_ctx.hw.io.read_inputs_local = esp32_read_inputs_local;
     ladder_ctx.hw.io.write_outputs_local = esp32_write_outputs_local;
@@ -511,18 +518,6 @@ void app_main(void) {
     ladder_ctx.on.end_task = esp32_on_end_task;
     ladder_ctx.hw.time.millis = esp32_millis;
     ladder_ctx.hw.time.delay = esp32_delay;
-
-    //ladder_ctx.ladder.state = LADDER_ST_RUNNING;
-
-    //ESP_LOGI(TAG, "Load demo program: ");
-    //if (!load_demo(&ladder_ctx)) {
-    //    ESP_LOGI(TAG, "ERROR demo program: ");
-    //    goto end;
-    //}
-
-    //ESP_LOGI(TAG, "Start Task Ladder");
-    //if (xTaskCreatePinnedToCore(ladder_task, "ladder", 15000, (void*)&ladder_ctx, 10, &laddertsk_handle, 1) != pdPASS)
-    //    ESP_LOGI(TAG, "ERROR: start task ladder");
 
     ///////////////////////////////////////////////////////
 
@@ -547,13 +542,16 @@ void app_main(void) {
     register_ladder_start();
     register_ladder_stop();
     register_ladder_print();
-    
+
     esp_console_dev_uart_config_t hw_config = ESP_CONSOLE_DEV_UART_CONFIG_DEFAULT();
     ESP_ERROR_CHECK(esp_console_new_repl_uart(&hw_config, &repl_config, &repl));
     ESP_ERROR_CHECK(esp_console_start_repl(repl));
 
     ///////////////////////////////////////////////////////
 
-end:
+    if (!ladder_ctx_init(&ladder_ctx, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1)) {
+        ESP_LOGI(TAG, "ERROR first initializing\n");
+    }
+
     vTaskDelay(100 / portTICK_PERIOD_MS);
 }
