@@ -76,4 +76,6 @@ void esp32_on_end_task(ladder_ctx_t* ladder_ctx) {
     ESP_LOGI(TAG, "End Task Ladder");
 
     ladder_ctx_deinit(ladder_ctx);
+    
+    vTaskDelete(NULL);
 }

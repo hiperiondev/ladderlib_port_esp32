@@ -277,6 +277,20 @@ static void register_ladder_load(void) {
 static int ladder_start(int argc, char** argv) {
     ladder_ctx.ladder.state = LADDER_ST_RUNNING;
 
+    // assign port functions
+    ladder_ctx.hw.io.read_inputs_local = esp32_read_inputs_local;
+    ladder_ctx.hw.io.write_outputs_local = esp32_write_outputs_local;
+    // ladder_ctx.hw.io.read_inputs_remote = esp32_read_inputs_remote;
+    // ladder_ctx.hw.io.write_outputs_remote = esp32_write_outputs_remote;
+    // ladder_ctx.on.scan_end = esp32_on_scan_end;
+    // ladder_ctx.on.instruction = esp32_on_instruction;
+    // ladder_ctx.on.task_before = esp32_on_task_before;
+    ladder_ctx.on.task_after = esp32_on_task_after;
+    ladder_ctx.on.panic = esp32_on_panic;
+    ladder_ctx.on.end_task = esp32_on_end_task;
+    ladder_ctx.hw.time.millis = esp32_millis;
+    ladder_ctx.hw.time.delay = esp32_delay;
+
     ESP_LOGI(TAG, "Start Task Ladder");
     if (xTaskCreatePinnedToCore(ladder_task, "ladder", 15000, (void*)&ladder_ctx, 10, &laddertsk_handle, 1) != pdPASS)
         ESP_LOGI(TAG, "ERROR: start task ladder");
@@ -502,22 +516,6 @@ void app_main(void) {
 
     ESP_LOGI(TAG, "Create FTP server task");
     ftpserver_start("test", "test", "/littlefs");
-
-    ///////////////////////////////////////////////////////
-
-    // assign port functions
-    ladder_ctx.hw.io.read_inputs_local = esp32_read_inputs_local;
-    ladder_ctx.hw.io.write_outputs_local = esp32_write_outputs_local;
-    // ladder_ctx.hw.io.read_inputs_remote = esp32_read_inputs_remote;
-    // ladder_ctx.hw.io.write_outputs_remote = esp32_write_outputs_remote;
-    // ladder_ctx.on.scan_end = esp32_on_scan_end;
-    // ladder_ctx.on.instruction = esp32_on_instruction;
-    // ladder_ctx.on.task_before = esp32_on_task_before;
-    ladder_ctx.on.task_after = esp32_on_task_after;
-    ladder_ctx.on.panic = esp32_on_panic;
-    ladder_ctx.on.end_task = esp32_on_end_task;
-    ladder_ctx.hw.time.millis = esp32_millis;
-    ladder_ctx.hw.time.delay = esp32_delay;
 
     ///////////////////////////////////////////////////////
 
