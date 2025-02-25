@@ -164,11 +164,31 @@ static int ladder_dump(int argc, char** argv) {
     }
 
     for (uint32_t n = 0; n < ladder_ctx.ladder.quantity.networks; n++) {
-        num_written = fwrite(&ladder_ctx.network[n], sizeof(ladder_network_t), 1, file);
+        num_written = fwrite(&ladder_ctx.network[n].enable, sizeof(bool), 1, file);
         if (num_written != 1) {
             perror("Error writing to file");
             fclose(file);
             return 1;
+        }
+
+        for (uint32_t b = 0; b < ladder_ctx.ladder.quantity.net_columns; b++) {
+            num_written = fwrite(&(ladder_ctx.network[n].bars[b]), sizeof(uint32_t), 1, file);
+            if (num_written != 1) {
+                perror("Error writing to file");
+                fclose(file);
+                return 1;
+            }
+        }
+
+        for (uint32_t c = 0; c < ladder_ctx.ladder.quantity.net_columns; c++) {
+            for (uint32_t r = 0; r < ladder_ctx.ladder.quantity.net_rows; r++) {
+                num_written = 0;
+                num_written += fwrite(&(ladder_ctx.network[n].cells[r][c].code), sizeof(uint8_t), 1, file);
+                num_written += fwrite(&(ladder_ctx.network[n].cells[r][c].data_qty), sizeof(uint8_t), 1, file);
+                for (uint32_t d = 0; d < ladder_ctx.network[n].cells[r][c].data_qty; d++) {
+                    num_written += fwrite(&(ladder_ctx.network[n].cells[r][c].data[d]), sizeof(ladder_value_t), 1, file);
+                }
+            }
         }
     }
 
@@ -229,35 +249,48 @@ static int ladder_load(int argc, char** argv) {
         return 1;
     }
 
-    rn = fwrite(&rows, sizeof(uint8_t), 1, file);
+    rn = fread(&rows, sizeof(uint8_t), 1, file);
     if (rn != 1) {
         perror("Error reading to file");
         fclose(file);
         return 1;
     }
 
-    rn = fwrite(&cols, sizeof(uint8_t), 1, file);
+    rn = fread(&cols, sizeof(uint8_t), 1, file);
     if (rn != 1) {
         perror("Error reading to file");
         fclose(file);
         return 1;
     }
+
+    printf("Networks: %d, Rows: %d, Columns: %d", (int)nets, (int)rows, (int)cols);
 
     if (ladder_ctx.network != NULL)
         ladder_ctx_deinit(&ladder_ctx);
     if (!ladder_ctx_init(&ladder_ctx, cols, rows, nets, QTY_M, QTY_I, QTY_Q, QTY_IW, QTY_QW, QTY_C, QTY_T, QTY_D, QTY_R)) {
-        ESP_LOGI(TAG, "ERROR Initializing\n");
+        printf("ERROR Initializing\n");
         return 1;
     }
 
     ladder_clear_program(&ladder_ctx);
 
     for (uint32_t n = 0; n < ladder_ctx.ladder.quantity.networks; n++) {
-        rn = fread(&ladder_ctx.network[n], sizeof(ladder_network_t), 1, file);
-        if (rn != 1) {
-            perror("Error reading to file");
-            fclose(file);
-            return 1;
+        rn = fread(&ladder_ctx.network[n].enable, sizeof(bool), 1, file);
+        for (uint32_t b = 0; b < ladder_ctx.ladder.quantity.net_columns; b++) {
+            rn = fread(&(ladder_ctx.network[n].bars[b]), sizeof(uint32_t), 1, file);
+        }
+
+        for (uint32_t c = 0; c < ladder_ctx.ladder.quantity.net_columns; c++) {
+            for (uint32_t r = 0; r < ladder_ctx.ladder.quantity.net_rows; r++) {
+                rn = 0;
+                uint8_t code = 0;
+                rn += fread(&code, sizeof(uint8_t), 1, file);
+                ladder_fn_cell(&ladder_ctx, n, r, c, code, 0);
+                rn += fread(&(ladder_ctx.network[n].cells[r][c].data_qty), sizeof(uint8_t), 1, file);
+                for (uint32_t d = 0; d < ladder_ctx.network[n].cells[r][c].data_qty; d++) {
+                    rn += fread(&(ladder_ctx.network[n].cells[r][c].data[d]), sizeof(ladder_value_t), 1, file);
+                }
+            }
         }
     }
 
