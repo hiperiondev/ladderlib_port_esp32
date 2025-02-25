@@ -73,9 +73,6 @@ bool esp32_on_task_after(ladder_ctx_t* ladder_ctx) {
 void esp32_on_panic(ladder_ctx_t* ladder_ctx) {}
 
 void esp32_on_end_task(ladder_ctx_t* ladder_ctx) {
-    ESP_LOGI(TAG, "End Task Ladder");
-
-    ladder_ctx_deinit(ladder_ctx);
-    
+    ESP_LOGI(TAG, "End Task Ladder");    
     vTaskDelete(NULL);
 }

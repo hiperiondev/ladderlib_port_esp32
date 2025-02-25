@@ -47,6 +47,9 @@ TaskHandle_t laddertsk_handle;
 static bool load_demo(ladder_ctx_t* ladder_ctx);
 
 static int ladder_status(int argc, char** argv) {
+    if (ladder_ctx.network == NULL)
+        return 1;
+
     printf("[scan time: %llu ms]\n", ladder_ctx.scan_internals.actual_scan_time);
     printf("-----------------------\n");
 
@@ -69,7 +72,7 @@ static int ladder_status(int argc, char** argv) {
     printf("        +----+----+-------+-----------------+\n");
     printf("        | Td | Tr |  acc  |   time_stamp    |\n");
     printf("        +----+----+-------+------- ---------+\n");
-    printf("Timer 0 | %d  | %d  | %05u| %15llu |\n", ladder_ctx.memory.Td[0], ladder_ctx.memory.Tr[0], (unsigned int)ladder_ctx.timers[0].acc,
+    printf("Timer 0 | %d  | %d  | %05u | %15llu |\n", ladder_ctx.memory.Td[0], ladder_ctx.memory.Tr[0], (unsigned int)ladder_ctx.timers[0].acc,
            ladder_ctx.timers[0].time_stamp);
     printf("Timer 1 | %d  | %d  | %05u | %15llu |\n", ladder_ctx.memory.Td[1], ladder_ctx.memory.Tr[1], (unsigned int)ladder_ctx.timers[1].acc,
            ladder_ctx.timers[1].time_stamp);
@@ -111,7 +114,7 @@ static void register_ladder_status(void) {
 }
 
 static int fn_fs_ls(int argc, char** argv) {
-    littlefs_ls();
+    fs_ls();
 
     return 0;
 }
@@ -126,13 +129,34 @@ static void register_fs_ls(void) {
     ESP_ERROR_CHECK(esp_console_cmd_register(&cmd));
 }
 
+static int fn_fs_rm(int argc, char** argv) {
+    if (argc < 2) {
+        printf(" Error: No file name\n");
+        return 1;
+    }
+
+    fs_remove(argv[1]);
+
+    return 0;
+}
+
+static void register_fs_rm(void) {
+    const esp_console_cmd_t cmd = {
+        .command = "rm",
+        .help = "Remove file",
+        .hint = NULL,
+        .func = &fn_fs_rm,
+    };
+    ESP_ERROR_CHECK(esp_console_cmd_register(&cmd));
+}
+
 static int ladder_dump(int argc, char** argv) {
     if (argc < 2) {
         printf(" Error: No file name\n");
         return 1;
     }
 
-    size_t num_written = 0;
+    size_t tmp = 0;
 
     printf("Dump to: %s\n", argv[1]);
 
@@ -142,38 +166,38 @@ static int ladder_dump(int argc, char** argv) {
         return 1;
     }
 
-    num_written = fwrite(&ladder_ctx.ladder.quantity.networks, sizeof(uint32_t), 1, file);
-    if (num_written != 1) {
+    tmp = fwrite(&ladder_ctx.ladder.quantity.networks, sizeof(uint32_t), 1, file);
+    if (tmp != 1) {
         perror("Error writing to file");
         fclose(file);
         return 1;
     }
 
-    num_written = fwrite(&ladder_ctx.ladder.quantity.net_rows, sizeof(uint8_t), 1, file);
-    if (num_written != 1) {
+    tmp = fwrite(&ladder_ctx.ladder.quantity.net_rows, sizeof(uint8_t), 1, file);
+    if (tmp != 1) {
         perror("Error writing to file");
         fclose(file);
         return 1;
     }
 
-    num_written = fwrite(&ladder_ctx.ladder.quantity.net_columns, sizeof(uint8_t), 1, file);
-    if (num_written != 1) {
+    tmp = fwrite(&ladder_ctx.ladder.quantity.net_columns, sizeof(uint8_t), 1, file);
+    if (tmp != 1) {
         perror("Error writing to file");
         fclose(file);
         return 1;
     }
 
     for (uint32_t n = 0; n < ladder_ctx.ladder.quantity.networks; n++) {
-        num_written = fwrite(&ladder_ctx.network[n].enable, sizeof(bool), 1, file);
-        if (num_written != 1) {
+        tmp = fwrite(&ladder_ctx.network[n].enable, sizeof(bool), 1, file);
+        if (tmp != 1) {
             perror("Error writing to file");
             fclose(file);
             return 1;
         }
 
         for (uint32_t b = 0; b < ladder_ctx.ladder.quantity.net_columns; b++) {
-            num_written = fwrite(&(ladder_ctx.network[n].bars[b]), sizeof(uint32_t), 1, file);
-            if (num_written != 1) {
+            tmp = fwrite(&(ladder_ctx.network[n].bars[b]), sizeof(uint32_t), 1, file);
+            if (tmp != 1) {
                 perror("Error writing to file");
                 fclose(file);
                 return 1;
@@ -182,12 +206,11 @@ static int ladder_dump(int argc, char** argv) {
 
         for (uint32_t c = 0; c < ladder_ctx.ladder.quantity.net_columns; c++) {
             for (uint32_t r = 0; r < ladder_ctx.ladder.quantity.net_rows; r++) {
-                num_written = 0;
-                num_written += fwrite(&(ladder_ctx.network[n].cells[r][c].code), sizeof(uint8_t), 1, file);
-                num_written += fwrite(&(ladder_ctx.network[n].cells[r][c].data_qty), sizeof(uint8_t), 1, file);
-                for (uint32_t d = 0; d < ladder_ctx.network[n].cells[r][c].data_qty; d++) {
-                    num_written += fwrite(&(ladder_ctx.network[n].cells[r][c].data[d]), sizeof(ladder_value_t), 1, file);
-                }
+                tmp = 0;
+                tmp += fwrite(&(ladder_ctx.network[n].cells[r][c].code), sizeof(uint8_t), 1, file);
+                tmp += fwrite(&(ladder_ctx.network[n].cells[r][c].data_qty), sizeof(uint8_t), 1, file);
+                for (uint32_t d = 0; d < ladder_ctx.network[n].cells[r][c].data_qty; d++)
+                    tmp += fwrite(&(ladder_ctx.network[n].cells[r][c].data[d]), sizeof(ladder_value_t), 1, file);
             }
         }
     }
@@ -210,7 +233,7 @@ static void register_ladder_dump(void) {
 
 static int ladder_load(int argc, char** argv) {
     if (argc < 2) {
-        printf(" Error: No file name\n");
+        ESP_LOGI(TAG, "Error: No file name\n");
         return 1;
     }
 
@@ -234,41 +257,41 @@ static int ladder_load(int argc, char** argv) {
     uint32_t nets = 0;
     uint8_t rows = 0, cols = 0;
 
-    printf("Load from: %s\n", argv[1]);
+    ESP_LOGI(TAG, "Load from: %s\n", argv[1]);
 
     FILE* file = fs_open(argv[1], "rb");
     if (file == NULL) {
-        perror("Error opening file");
+        ESP_LOGI(TAG, "Error opening file");
         return 1;
     }
 
     rn = fread(&nets, sizeof(uint32_t), 1, file);
     if (rn != 1) {
-        perror("Error reading to file");
+        ESP_LOGI(TAG, "Error reading to file");
         fclose(file);
         return 1;
     }
 
     rn = fread(&rows, sizeof(uint8_t), 1, file);
     if (rn != 1) {
-        perror("Error reading to file");
+        ESP_LOGI(TAG, "Error reading to file");
         fclose(file);
         return 1;
     }
 
     rn = fread(&cols, sizeof(uint8_t), 1, file);
     if (rn != 1) {
-        perror("Error reading to file");
+        ESP_LOGI(TAG, "Error reading to file");
         fclose(file);
         return 1;
     }
 
-    printf("Networks: %d, Rows: %d, Columns: %d", (int)nets, (int)rows, (int)cols);
+    ESP_LOGI(TAG, "Networks: %d, Rows: %d, Columns: %d", (int)nets, (int)rows, (int)cols);
 
     if (ladder_ctx.network != NULL)
         ladder_ctx_deinit(&ladder_ctx);
     if (!ladder_ctx_init(&ladder_ctx, cols, rows, nets, QTY_M, QTY_I, QTY_Q, QTY_IW, QTY_QW, QTY_C, QTY_T, QTY_D, QTY_R)) {
-        printf("ERROR Initializing\n");
+        ESP_LOGI(TAG, "ERROR Initializing\n");
         return 1;
     }
 
@@ -294,6 +317,7 @@ static int ladder_load(int argc, char** argv) {
         }
     }
 
+    fclose(file);
     return 0;
 }
 
@@ -308,6 +332,11 @@ static void register_ladder_load(void) {
 }
 
 static int ladder_start(int argc, char** argv) {
+    if (ladder_ctx.network == NULL) {
+        ESP_LOGI(TAG, "No networks!");
+        return 1;
+    }
+
     ladder_ctx.ladder.state = LADDER_ST_RUNNING;
 
     // assign port functions
@@ -342,7 +371,7 @@ static void register_ladder_start(void) {
 }
 
 static int ladder_stop(int argc, char** argv) {
-    ladder_ctx.ladder.state = LADDER_ST_RUNNING;
+    ladder_ctx.ladder.state = LADDER_ST_EXIT_TSK;
 
     return 0;
 }
@@ -568,6 +597,7 @@ void app_main(void) {
     register_system_common();
     register_ladder_status();
     register_fs_ls();
+    register_fs_rm();
     register_ladder_dump();
     register_ladder_load();
     register_ladder_start();
