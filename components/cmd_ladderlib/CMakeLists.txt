@@ -9,13 +9,7 @@ idf_component_register(
     INCLUDE_DIRS
         ./
     REQUIRES
-        vfs
         ladderlib
-        console
-        driver
-        ftpserver
-        nvs_flash
-        hal_esp32
-        cmd_system
-        cmd_ladderlib
+        console  
+        hal_esp32     
 )
