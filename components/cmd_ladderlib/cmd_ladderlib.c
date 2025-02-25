@@ -10,7 +10,9 @@
 #include "esp_log.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
+#include "ftpserver.h"
 #include "hal_fs.h"
+#include "hal_wifi.h"
 
 #include "ladder.h"
 #include "port_esp32.h"
@@ -472,6 +474,20 @@ static int ladder_stop(int argc, char** argv) {
     return 0;
 }
 
+static int connect_wifi(int argc, char** argv) {
+    if (argc < 3) {
+        ESP_LOGI(TAG, "Error: No ssid and password\n");
+        return 1;
+    }
+
+    ESP_LOGI(TAG, "Connect WIFI\n");
+    wifi_connect_sta(argv[1], argv[2]);
+
+    ESP_LOGI(TAG, "Start FTP server");
+    ftpserver_start("test", "test", "/littlefs");
+
+    return 0;
+}
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void register_ladder_status(void) {
@@ -530,6 +546,16 @@ void register_ladder_stop(void) {
         .help = "Stop ladder logic",
         .hint = NULL,
         .func = &ladder_stop,
+    };
+    ESP_ERROR_CHECK(esp_console_cmd_register(&cmd));
+}
+
+void register_connect_wifi(void) {
+    const esp_console_cmd_t cmd = {
+        .command = "connect",
+        .help = "Connect wifi and start FTP server",
+        .hint = NULL,
+        .func = &connect_wifi,
     };
     ESP_ERROR_CHECK(esp_console_cmd_register(&cmd));
 }

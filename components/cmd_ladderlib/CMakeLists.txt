@@ -11,5 +11,6 @@ idf_component_register(
     REQUIRES
         ladderlib
         console  
-        hal_esp32     
+        hal_esp32
+        ftpserver   
 )

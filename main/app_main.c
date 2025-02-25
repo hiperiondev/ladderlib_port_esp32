@@ -13,18 +13,13 @@
 #include "esp_log.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
-#include "ftpserver.h"
-#include "hal_fs.h"
-#include "hal_wifi.h"
 #include "nvs_flash.h"
+#include "hal_fs.h"
 
 #include "cmd_ladderlib.h"
 #include "ladder.h"
 
 static const char* TAG = "main";
-
-#define WIFI_SSID "HPRN-03"
-#define WIFI_PASS "wifihiperion3773"
 
 #define CONSOLE_MAX_COMMAND_LINE_LENGTH 1024
 #define HISTORY_PATH                    "/littlefs/history.txt"
@@ -37,11 +32,6 @@ TaskHandle_t laddertsk_handle;
 void app_main(void) {
     nvs_flash_init();
     fs_init();
-    ESP_LOGI(TAG, "Connect WIFI\n");
-    wifi_connect_sta(WIFI_SSID, WIFI_PASS);
-
-    ESP_LOGI(TAG, "Start FTP server");
-    ftpserver_start("test", "test", "/littlefs");
 
     ///////////////////////////////////////////////////////
 
@@ -67,6 +57,7 @@ void app_main(void) {
     register_ladder_load();
     register_ladder_start();
     register_ladder_stop();
+    register_connect_wifi();
     /////////////////////////
 
     esp_console_dev_uart_config_t hw_config = ESP_CONSOLE_DEV_UART_CONFIG_DEFAULT();
