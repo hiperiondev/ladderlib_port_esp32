@@ -11,7 +11,6 @@ idf_component_register(
     REQUIRES
         vfs
         ladderlib
-        port_esp32
         console
         driver
         ftpserver

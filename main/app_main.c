@@ -19,7 +19,6 @@
 #include "nvs_flash.h"
 
 #include "ladder.h"
-#include "ladder_print.h"
 #include "port_esp32.h"
 
 static const char* TAG = "main";
@@ -386,27 +385,6 @@ static void register_ladder_stop(void) {
     ESP_ERROR_CHECK(esp_console_cmd_register(&cmd));
 }
 
-static int ladder_net_print(int argc, char** argv) {
-    if (ladder_ctx.network == NULL) {
-        ESP_LOGI(TAG, "No program!");
-        return 1;
-    }
-
-    ladder_print(ladder_ctx);
-
-    return 0;
-}
-
-static void register_ladder_print(void) {
-    const esp_console_cmd_t cmd = {
-        .command = "print",
-        .help = "Print ladder logic",
-        .hint = NULL,
-        .func = &ladder_net_print,
-    };
-    ESP_ERROR_CHECK(esp_console_cmd_register(&cmd));
-}
-
 //////////////////////////////////////////////////////////
 
 static bool load_demo(ladder_ctx_t* ladder_ctx) {
@@ -602,7 +580,6 @@ void app_main(void) {
     register_ladder_load();
     register_ladder_start();
     register_ladder_stop();
-    register_ladder_print();
 
     esp_console_dev_uart_config_t hw_config = ESP_CONSOLE_DEV_UART_CONFIG_DEFAULT();
     ESP_ERROR_CHECK(esp_console_new_repl_uart(&hw_config, &repl_config, &repl));
