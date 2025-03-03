@@ -13,8 +13,8 @@
 #include "esp_log.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
-#include "nvs_flash.h"
 #include "hal_fs.h"
+#include "nvs_flash.h"
 
 #include "cmd_ladderlib.h"
 #include "ladder.h"
@@ -31,8 +31,7 @@ TaskHandle_t laddertsk_handle;
 
 void app_main(void) {
     nvs_flash_init();
-    fs_init();
-
+    fs_init();    
     ///////////////////////////////////////////////////////
 
     ESP_LOGI(TAG, "Start console");

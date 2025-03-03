@@ -11,4 +11,6 @@ idf_component_register(
         ladderlib/source/include/
         ladderlib/port/esp32/
         ladderlib/
+    REQUIRES
+        driver
 )

@@ -20,9 +20,9 @@
 // registers quantity
 #define QTY_M  8
 #define QTY_I  8
-#define QTY_Q  8
-#define QTY_IW 8
-#define QTY_QW 8
+#define QTY_Q  6
+#define QTY_IW 0
+#define QTY_QW 0
 #define QTY_C  8
 #define QTY_T  8
 #define QTY_D  8
@@ -355,6 +355,12 @@ static int ladder_load(int argc, char** argv) {
             ESP_LOGI(TAG, "ERROR Initializing\n");
             return 1;
         }
+
+        if (!esp32_port_initialize(&ladder_ctx)) {
+            ESP_LOGI(TAG, "ERROR esp32 port initialize");
+            return 1;
+        }
+        
         ladder_clear_program(&ladder_ctx);
 
         load_demo(&ladder_ctx);
@@ -398,8 +404,14 @@ static int ladder_load(int argc, char** argv) {
 
     if (ladder_ctx.network != NULL)
         ladder_ctx_deinit(&ladder_ctx);
+    
     if (!ladder_ctx_init(&ladder_ctx, cols, rows, nets, QTY_M, QTY_I, QTY_Q, QTY_IW, QTY_QW, QTY_C, QTY_T, QTY_D, QTY_R)) {
         ESP_LOGI(TAG, "ERROR Initializing\n");
+        return 1;
+    }
+    
+    if (!esp32_port_initialize(&ladder_ctx)) {
+        ESP_LOGI(TAG, "ERROR esp32 port initialize");
         return 1;
     }
 
