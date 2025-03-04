@@ -4,7 +4,6 @@
  *
  * This is based on other projects:
  *    PLsi (https://github.com/ElPercha/PLsi)
- *    ccronexpr (https://github.com/staticlibs/ccronexpr)
  *
  *    please contact their authors for more information.
  *
@@ -24,10 +23,9 @@
  * Boston, MA 02110-1301, USA.
  *
  */
- 
+
 #include <string.h>
 
-#include "cmd_system.h"
 #include "esp_console.h"
 #include "esp_log.h"
 #include "freertos/FreeRTOS.h"
@@ -36,9 +34,10 @@
 #include "nvs_flash.h"
 
 #include "cmd_ladderlib.h"
+#include "cmd_system.h"
 #include "ladder.h"
 
-static const char* TAG = "main";
+static const char *TAG = "main";
 
 #define CONSOLE_MAX_COMMAND_LINE_LENGTH 1024
 #define HISTORY_PATH                    "/littlefs/history.txt"
@@ -50,12 +49,12 @@ TaskHandle_t laddertsk_handle;
 
 void app_main(void) {
     nvs_flash_init();
-    fs_init();    
+    fs_init();
     ///////////////////////////////////////////////////////
 
     ESP_LOGI(TAG, "Start console");
 
-    esp_console_repl_t* repl = NULL;
+    esp_console_repl_t *repl = NULL;
     esp_console_repl_config_t repl_config = ESP_CONSOLE_REPL_CONFIG_DEFAULT();
 
     repl_config.prompt = "ladderlib >";
