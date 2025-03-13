@@ -31,9 +31,9 @@
 extern ladder_ctx_t ladder_ctx;
 extern TaskHandle_t laddertsk_handle;
 
-static const char* TAG = "cmd_ladderlib";
+static const char *TAG = "cmd_ladderlib";
 
-static bool load_demo(ladder_ctx_t* ladder_ctx) {
+static bool load_demo(ladder_ctx_t *ladder_ctx) {
     bool ret = true;
 
     ESP_LOGI(TAG, "blink (3 network, 7 rows, 6 columns)");
@@ -49,7 +49,7 @@ static bool load_demo(ladder_ctx_t* ladder_ctx) {
 
     ret &= ladder_fn_cell(ladder_ctx, 0, 0, 2, LADDER_INS_TON, 0);
     ladder_cell_data(ladder_ctx, 0, 0, 2, 0, LADDER_TYPE_T, 0);
-    ladder_cell_data(ladder_ctx, 0, 0, 2, 1, LADDER_BASETIME_SEC, 5);
+    ladder_cell_data(ladder_ctx, 0, 0, 2, 1, LADDER_BASETIME_SEC, 2);
 
     ret &= ladder_fn_cell(ladder_ctx, 0, 0, 3, LADDER_INS_CONN, 0);
     ret &= ladder_fn_cell(ladder_ctx, 0, 0, 4, LADDER_INS_CONN, 0);
@@ -64,7 +64,7 @@ static bool load_demo(ladder_ctx_t* ladder_ctx) {
 
     ret &= ladder_fn_cell(ladder_ctx, 0, 2, 1, LADDER_INS_TON, 0);
     ladder_cell_data(ladder_ctx, 0, 2, 1, 0, LADDER_TYPE_T, 1);
-    ladder_cell_data(ladder_ctx, 0, 2, 1, 1, LADDER_BASETIME_SEC, 5);
+    ladder_cell_data(ladder_ctx, 0, 2, 1, 1, LADDER_BASETIME_SEC, 2);
 
     ret &= ladder_fn_cell(ladder_ctx, 0, 2, 2, LADDER_INS_CONN, 0);
     ret &= ladder_fn_cell(ladder_ctx, 0, 2, 3, LADDER_INS_CONN, 0);
@@ -117,7 +117,7 @@ static bool load_demo(ladder_ctx_t* ladder_ctx) {
 
         ret &= ladder_fn_cell(ladder_ctx, 1, 0, 3, LADDER_INS_TON, 0);
     ladder_cell_data(ladder_ctx, 1, 0, 3, 0, LADDER_TYPE_T, 2);
-    ladder_cell_data(ladder_ctx, 1, 0, 3, 1, LADDER_BASETIME_SEC, 5);
+    ladder_cell_data(ladder_ctx, 1, 0, 3, 1, LADDER_BASETIME_SEC, 2);
 
     ret &= ladder_fn_cell(ladder_ctx, 1, 0, 4, LADDER_INS_CONN, 0);
 
@@ -131,7 +131,7 @@ static bool load_demo(ladder_ctx_t* ladder_ctx) {
 
     ret &= ladder_fn_cell(ladder_ctx, 1, 2, 1, LADDER_INS_TON, 0);
     ladder_cell_data(ladder_ctx, 1, 2, 1, 0, LADDER_TYPE_T, 3);
-    ladder_cell_data(ladder_ctx, 1, 2, 1, 1, LADDER_BASETIME_SEC, 5);
+    ladder_cell_data(ladder_ctx, 1, 2, 1, 1, LADDER_BASETIME_SEC, 2);
 
     ret &= ladder_fn_cell(ladder_ctx, 1, 2, 2, LADDER_INS_CONN, 0);
     ret &= ladder_fn_cell(ladder_ctx, 1, 2, 3, LADDER_INS_CONN, 0);
@@ -194,7 +194,7 @@ static bool load_demo(ladder_ctx_t* ladder_ctx) {
     return ret;
 }
 
-static int ladder_status(int argc, char** argv) {
+static int ladder_status(int argc, char **argv) {
     if (ladder_ctx.network == NULL)
         return 1;
 
@@ -251,13 +251,13 @@ static int ladder_status(int argc, char** argv) {
     return 0;
 }
 
-static int fn_fs_ls(int argc, char** argv) {
+static int fn_fs_ls(int argc, char **argv) {
     fs_ls();
 
     return 0;
 }
 
-static int fn_fs_rm(int argc, char** argv) {
+static int fn_fs_rm(int argc, char **argv) {
     if (argc < 2) {
         printf(" Error: No file name\n");
         return 1;
@@ -268,7 +268,7 @@ static int fn_fs_rm(int argc, char** argv) {
     return 0;
 }
 
-static int ladder_dump(int argc, char** argv) {
+static int ladder_dump(int argc, char **argv) {
     if (argc < 2) {
         printf(" Error: No file name\n");
         return 1;
@@ -278,7 +278,7 @@ static int ladder_dump(int argc, char** argv) {
 
     printf("Dump to: %s\n", argv[1]);
 
-    FILE* file = fs_open(argv[1], "wb");
+    FILE *file = fs_open(argv[1], "wb");
     if (file == NULL) {
         perror("Error opening file");
         return 1;
@@ -339,7 +339,7 @@ static int ladder_dump(int argc, char** argv) {
     return 0;
 }
 
-static int ladder_load(int argc, char** argv) {
+static int ladder_load(int argc, char **argv) {
     if (argc < 2) {
         ESP_LOGI(TAG, "Error: No file name\n");
         return 1;
@@ -360,7 +360,7 @@ static int ladder_load(int argc, char** argv) {
             ESP_LOGI(TAG, "ERROR esp32 port initialize");
             return 1;
         }
-        
+
         ladder_clear_program(&ladder_ctx);
 
         load_demo(&ladder_ctx);
@@ -373,7 +373,7 @@ static int ladder_load(int argc, char** argv) {
 
     ESP_LOGI(TAG, "Load from: %s\n", argv[1]);
 
-    FILE* file = fs_open(argv[1], "rb");
+    FILE *file = fs_open(argv[1], "rb");
     if (file == NULL) {
         ESP_LOGI(TAG, "Error opening file");
         return 1;
@@ -404,12 +404,12 @@ static int ladder_load(int argc, char** argv) {
 
     if (ladder_ctx.network != NULL)
         ladder_ctx_deinit(&ladder_ctx);
-    
+
     if (!ladder_ctx_init(&ladder_ctx, cols, rows, nets, QTY_M, QTY_I, QTY_Q, QTY_IW, QTY_QW, QTY_C, QTY_T, QTY_D, QTY_R)) {
         ESP_LOGI(TAG, "ERROR Initializing\n");
         return 1;
     }
-    
+
     if (!esp32_port_initialize(&ladder_ctx)) {
         ESP_LOGI(TAG, "ERROR esp32 port initialize");
         return 1;
@@ -441,7 +441,7 @@ static int ladder_load(int argc, char** argv) {
     return 0;
 }
 
-static int ladder_start(int argc, char** argv) {
+static int ladder_start(int argc, char **argv) {
     if (ladder_ctx.network == NULL) {
         ESP_LOGI(TAG, "No networks!");
         return 1;
@@ -464,7 +464,7 @@ static int ladder_start(int argc, char** argv) {
     ladder_ctx.hw.time.delay = esp32_delay;
 
     ESP_LOGI(TAG, "Start Task Ladder");
-    if (xTaskCreatePinnedToCore(ladder_task, "ladder", 15000, (void*)&ladder_ctx, 10, &laddertsk_handle, 1) != pdPASS)
+    if (xTaskCreatePinnedToCore(ladder_task, "ladder", 15000, (void *)&ladder_ctx, 10, &laddertsk_handle, 1) != pdPASS)
         ESP_LOGI(TAG, "ERROR: start task ladder");
 
     return 0;
@@ -480,13 +480,13 @@ void register_ladder_start(void) {
     ESP_ERROR_CHECK(esp_console_cmd_register(&cmd));
 }
 
-static int ladder_stop(int argc, char** argv) {
+static int ladder_stop(int argc, char **argv) {
     ladder_ctx.ladder.state = LADDER_ST_EXIT_TSK;
 
     return 0;
 }
 
-static int connect_wifi(int argc, char** argv) {
+static int connect_wifi(int argc, char **argv) {
     if (argc < 3) {
         ESP_LOGI(TAG, "Error: No ssid and password\n");
         return 1;
@@ -500,6 +500,17 @@ static int connect_wifi(int argc, char** argv) {
 
     return 0;
 }
+
+static int output_test(int argc, char **argv) {
+    esp32_port_output_test();
+    return 0;
+}
+
+static int input_test(int argc, char **argv) {
+    esp32_port_input_test();
+    return 0;
+}
+
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void register_ladder_status(void) {
@@ -568,6 +579,26 @@ void register_connect_wifi(void) {
         .help = "Connect wifi and start FTP server",
         .hint = NULL,
         .func = &connect_wifi,
+    };
+    ESP_ERROR_CHECK(esp_console_cmd_register(&cmd));
+}
+
+void register_output_test(void) {
+    const esp_console_cmd_t cmd = {
+        .command = "output_test",
+        .help = "Output test",
+        .hint = NULL,
+        .func = &output_test,
+    };
+    ESP_ERROR_CHECK(esp_console_cmd_register(&cmd));
+}
+
+void register_input_test(void) {
+    const esp_console_cmd_t cmd = {
+        .command = "input_test",
+        .help = "Input test",
+        .hint = NULL,
+        .func = &input_test,
     };
     ESP_ERROR_CHECK(esp_console_cmd_register(&cmd));
 }

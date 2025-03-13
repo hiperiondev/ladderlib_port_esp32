@@ -50,6 +50,7 @@ TaskHandle_t laddertsk_handle;
 void app_main(void) {
     nvs_flash_init();
     fs_init();
+
     ///////////////////////////////////////////////////////
 
     ESP_LOGI(TAG, "Start console");
@@ -75,6 +76,8 @@ void app_main(void) {
     register_ladder_start();
     register_ladder_stop();
     register_connect_wifi();
+    register_output_test();
+    register_input_test();
     /////////////////////////
 
     esp_console_dev_uart_config_t hw_config = ESP_CONSOLE_DEV_UART_CONFIG_DEFAULT();

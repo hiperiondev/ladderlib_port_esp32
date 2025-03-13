@@ -16,5 +16,7 @@ void register_ladder_load(void);
 void register_ladder_start(void);
 void register_ladder_stop(void);
 void register_connect_wifi(void);
+void register_output_test(void);
+void register_input_test(void);
 
 #endif /* CMD_LADDERLIB_H_ */
