@@ -32,7 +32,7 @@
 #include "freertos/task.h"
 #include "hal_fs.h"
 #include "nvs_flash.h"
-#include <mdns.h>
+//#include <mdns.h>
 
 #include "cmd_ladderlib.h"
 #include "cmd_system.h"
@@ -55,9 +55,9 @@ void app_main(void) {
 
     wifi_provision_care("HiperionPLC");
 
-    ESP_LOGI(TAG, "Publish mDNS hostname %s.local.", TAG);
-    ESP_ERROR_CHECK(mdns_init());
-    ESP_ERROR_CHECK(mdns_hostname_set(TAG));
+    //ESP_LOGI(TAG, "Publish mDNS hostname %s.local.", TAG);
+    //ESP_ERROR_CHECK(mdns_init());
+    //ESP_ERROR_CHECK(mdns_hostname_set(TAG));
 
     ///////////////////////////////////////////////////////
 
@@ -72,7 +72,7 @@ void app_main(void) {
     repl_config.history_save_path = HISTORY_PATH;
     ESP_LOGI(TAG, " (Command history enabled)");
 
-    // register commands
+    //////// register commands ////////
     esp_console_register_help_command();
 
     register_system_common();
@@ -86,7 +86,7 @@ void app_main(void) {
     register_ftpserver();
     register_output_test();
     register_input_test();
-    /////////////////////////
+    ///////////////////////////////////
 
     esp_console_dev_uart_config_t hw_config = ESP_CONSOLE_DEV_UART_CONFIG_DEFAULT();
     ESP_ERROR_CHECK(esp_console_new_repl_uart(&hw_config, &repl_config, &repl));
