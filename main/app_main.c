@@ -32,9 +32,11 @@
 #include "freertos/task.h"
 #include "hal_fs.h"
 #include "nvs_flash.h"
+#include <mdns.h>
 
 #include "cmd_ladderlib.h"
 #include "cmd_system.h"
+#include "esp32-wifi-provision-care.h"
 #include "ladder.h"
 
 static const char *TAG = "main";
@@ -50,6 +52,12 @@ TaskHandle_t laddertsk_handle;
 void app_main(void) {
     nvs_flash_init();
     fs_init();
+
+    wifi_provision_care("HiperionPLC");
+
+    ESP_LOGI(TAG, "Publish mDNS hostname %s.local.", TAG);
+    ESP_ERROR_CHECK(mdns_init());
+    ESP_ERROR_CHECK(mdns_hostname_set(TAG));
 
     ///////////////////////////////////////////////////////
 
@@ -75,7 +83,7 @@ void app_main(void) {
     register_ladder_load();
     register_ladder_start();
     register_ladder_stop();
-    register_connect_wifi();
+    register_ftpserver();
     register_output_test();
     register_input_test();
     /////////////////////////

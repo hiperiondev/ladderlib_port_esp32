@@ -486,15 +486,7 @@ static int ladder_stop(int argc, char **argv) {
     return 0;
 }
 
-static int connect_wifi(int argc, char **argv) {
-    if (argc < 3) {
-        ESP_LOGI(TAG, "Error: No ssid and password\n");
-        return 1;
-    }
-
-    ESP_LOGI(TAG, "Connect WIFI\n");
-    wifi_connect_sta(argv[1], argv[2]);
-
+static int ladder_ftpserver(int argc, char **argv) {
     ESP_LOGI(TAG, "Start FTP server");
     ftpserver_start("test", "test", "/littlefs");
 
@@ -573,12 +565,12 @@ void register_ladder_stop(void) {
     ESP_ERROR_CHECK(esp_console_cmd_register(&cmd));
 }
 
-void register_connect_wifi(void) {
+void register_ftpserver(void) {
     const esp_console_cmd_t cmd = {
-        .command = "connect",
-        .help = "Connect wifi and start FTP server",
+        .command = "ftpserver",
+        .help = "Start FTP server",
         .hint = NULL,
-        .func = &connect_wifi,
+        .func = &ladder_ftpserver,
     };
     ESP_ERROR_CHECK(esp_console_cmd_register(&cmd));
 }

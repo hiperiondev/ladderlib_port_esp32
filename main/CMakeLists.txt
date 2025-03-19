@@ -18,4 +18,5 @@ idf_component_register(
         hal_esp32
         cmd_system
         cmd_ladderlib
+        esp32-wifi-provision-care
 )
